@@ -1,0 +1,74 @@
+/*
+ * PEG.js (http://pegjs.majda.cz/) grammar for regular expressions
+ *
+ * Since JavaScript doesn't have an equivalent to Go's regexp/syntax
+ * (http://golang.org/pkg/regexp/syntax/), we introduce a simplified regular
+ * expression grammar to obtain parse trees for a subset of valid RegExp
+ * patterns.
+ */
+
+regex
+  = union
+  / concat
+
+union
+  = a:concat "|" b:regex
+  { return {
+    type: "union",
+    value: [a, b]
+  } }
+
+concat
+  = a:term b:concat
+  { return {
+    type: "concat",
+    value: [a, b]
+  } }
+  / term
+
+term
+  = repetition
+  / single_term
+
+single_term
+  = literal
+  / char_class
+  / wildcard
+  / "(" value:regex ")"
+  { return value }
+
+repetition
+  = value:single_term quantifier:[*?+]
+  { return {
+    type: "repetition",
+    quantifier: quantifier,
+    value: value
+  }}
+
+literal
+  = value:char
+  { return {
+    type: "literal",
+    value: value
+  }}
+
+char_class
+  = "[" value:$([^\\\]] / "\\" .)+ "]"
+  { return {
+    type: "char_class",
+    value: value
+  }}
+
+wildcard
+  = "."
+  { return {
+    type: "wildcard"
+  }}
+
+char
+  = non_reserved_char
+  / "\\" value:.
+  { return value }
+
+non_reserved_char
+  = [^|+?*\[\]{}()\\.]
