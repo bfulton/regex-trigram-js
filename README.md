@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/bfulton/regex-trigram-js.svg)](https://travis-ci.org/bfulton/regex-trigram-js)
+
 regex-trigram-js
 ================
 
