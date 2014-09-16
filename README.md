@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/bfulton/regex-trigram-js.svg)](https://travis-ci.org/bfulton/regex-trigram-js)
+[![NPM version](https://badge.fury.io/js/regex-trigram.svg)](http://badge.fury.io/js/regex-trigram)
 
 regex-trigram-js
 ================
