@@ -21,7 +21,7 @@ module.exports = {
 var analyze = function(re) {
   //println("analyze", re.String())
   //defer func() { println("->", ret.String()) }()
-  var info = {};
+  var info = new RegexInfo({});
   var i;
   switch (re.type) {
     case "NO_MATCH":
@@ -36,7 +36,7 @@ var analyze = function(re) {
     case "NO_WORD_BOUNDARY":
       return RegexInfo.emptyString();
 
-    case "LITERAL":
+    case "literal":
       /*
        if (re.Flags&syntax.FoldCase != 0 {
        switch len(re.Rune) {
@@ -82,18 +82,32 @@ var analyze = function(re) {
     case "CAPTURE":
       return analyze(re.value[0]);
 
-    case "CONCAT":
+    case "concat":
       return fold(concat, re.value, RegexInfo.emptyString());
 
-    case "ALTERNATE":
+    case "union":
       return fold(alternate, re.value, RegexInfo.noMatch());
 
-    case "QUEST":
-      return alternate(analyze(re.value[0]), RegexInfo.emptyString());
-
-    case "STAR":
-      // We don't know anything, so assume the worst.
-      return RegexInfo.anyMatch();
+    case "repetition":
+      if (re.quantifier == "?") {
+        return alternate(analyze(re.value), RegexInfo.emptyString());
+      } else if (re.quantifier == "+") {
+        // x+
+        // Since there has to be at least one x, the prefixes and suffixes
+        // stay the same.  If x was exact, it isn't anymore.
+        info = analyze(re.value);
+        if (info.exact.length) {
+          info.prefix = info.exact;
+          info.suffix = info.exact.slice();
+          info.exact = [];
+        }
+      } else if (re.quantifier == "*") {
+        // We don't know anything, so assume the worst.
+        return RegexInfo.anyMatch();
+      } else {
+        throw new Error("unhandled repetition quantifier: " + re.quantifier);
+      }
+      break;
 
     case "REPEAT":
       if (re.min === 0) {
@@ -101,19 +115,7 @@ var analyze = function(re) {
         return RegexInfo.anyMatch();
       }
       /* falls through */
-    case "PLUS":
-      // x+
-      // Since there has to be at least one x, the prefixes and suffixes
-      // stay the same.  If x was exact, it isn't anymore.
-      info = analyze(re.value[0]);
-      if (info.exact) {
-        info.prefix = info.exact;
-        info.suffix = info.exact.slice();
-        info.exact = null;
-      }
-      break;
-
-    case "CHAR_CLASS":
+    case "char_class":
       info.match = RegexQuery.ALL;
 
       // Special case.
@@ -145,21 +147,28 @@ var analyze = function(re) {
         }
       }
       break;
+
+    default:
+      throw new Error("unhandled expression type: " + re.type);
   }
-  return info.simplify(false);
+  info.simplify(false);
+  return info;
 };
 
 // fold is the usual higher-order function.
 var fold = function(f, sub, zero) {
+  var info;
   if (sub.length === 0) {
-    return zero;
-  }
-  if (sub.length == 1) {
-    return analyze(sub[0]);
-  }
-  var info = f(analyze(sub[0]), analyze(sub[1]));
-  for (var i = 2; i < sub.length; i++) {
-    info = f(info, analyze(sub[i]));
+    info = zero;
+  } else if (sub.length == 1) {
+    info = analyze(sub[0]);
+  } else {
+    var analyzeSub0 = analyze(sub[0]);
+    var analyzeSub1 = analyze(sub[1]);
+    info = f(analyzeSub0, analyzeSub1);
+    for (var i = 2; i < sub.length; i++) {
+      info = f(info, analyze(sub[i]));
+    }
   }
   return info;
 };
@@ -170,10 +179,10 @@ var concat = function(x, y) {
   //defer func() { println("->", out.String()) }()
   var xy = new RegexInfo({});
   xy.match = x.match.and(y.match);
-  if (x.exact && y.exact) {
+  if (x.exact.length && y.exact.length) {
     xy.exact = cross(x.exact, y.exact, false);
   } else {
-    if (x.exact) {
+    if (x.exact.length) {
       xy.prefix = cross(x.exact, y.prefix, false);
     } else {
       xy.prefix = x.prefix;
@@ -181,7 +190,7 @@ var concat = function(x, y) {
         xy.prefix = union(xy.prefix, y.prefix, false);
       }
     }
-    if (y.exact) {
+    if (y.exact.length) {
       xy.suffix = cross(x.suffix, y.exact, true);
     } else {
       xy.suffix = y.suffix;
@@ -196,7 +205,7 @@ var concat = function(x, y) {
   // of them must be present and would not necessarily be
   // accounted for in xy.prefix or xy.suffix yet.  Cut things off
   // at maxSet just to keep the sets manageable.
-  if (!x.exact && !y.exact &&
+  if (!x.exact.length && !y.exact.length &&
     x.suffix.length <= maxSet && y.prefix.length <= maxSet &&
     minLen(x.suffix) + minLen(y.prefix) >= 3) {
     xy.match = xy.match.andTrigrams(cross(x.suffix, y.prefix, false));
@@ -211,13 +220,13 @@ var alternate = function(x, y) {
   //println("alternate", x.String(), "...", y.String())
   //defer func() { println("->", out.String()) }()
   var xy = new RegexInfo({});
-  if (x.exact && y.exact) {
+  if (x.exact.length && y.exact.length) {
     xy.exact = union(x.exact, y.exact, false);
-  } else if (x.exact) {
+  } else if (x.exact.length) {
     xy.prefix = union(x.exact, y.prefix, false);
     xy.suffix = union(x.exact, y.suffix, true);
     x.addExact();
-  } else if (y.exact) {
+  } else if (y.exact.length) {
     xy.prefix = union(x.prefix, y.exact, false);
     xy.suffix = union(x.suffix, y.exact.copy(), true);
     y.addExact();
@@ -357,8 +366,8 @@ RegexQuery.prototype.andOr = function(other, op) {
     r.trigram[wj] = r.trigram[j];
     wj++;
   }
-  q.trigram = q.trigram.substr(0, wi);
-  r.trigram = r.trigram.substr(0, wj);
+  q.trigram = q.trigram.slice(0, wi);
+  r.trigram = r.trigram.slice(0, wj);
   if (common.length > 0) {
     // If there were common trigrams, rewrite
     //
@@ -418,7 +427,7 @@ RegexQuery.prototype.trigramImplies = function(other) {
   var i;
   if (other.op == "OR") {
     for (i = 0; i < other.sub.length; i++) {
-      if (this.trigramImplies(other[i])) {
+      if (this.trigramImplies(other.sub[i])) {
         return true;
       }
     }
@@ -431,11 +440,11 @@ RegexQuery.prototype.trigramImplies = function(other) {
   }
   if (other.op == "AND") {
     for (i = 0; i < other.sub.length; i++) {
-      if (!this.trigramImplies(other[i])) {
+      if (!this.trigramImplies(other.sub[i])) {
         return false;
       }
     }
-    return isSubsetOf(q.trigram, t);
+    return isSubsetOf(other.trigram, t);
   }
   return false;
 };
@@ -451,14 +460,13 @@ RegexQuery.prototype.andTrigrams = function(t) {
   }
 
   var or = RegexQuery.NONE;
-  var i;
-  for (i = 0; i < t.length; i++) {
-    var tt = t[i];
+  for (var j = 0; j < t.length; j++) {
+    var tt = t[j];
     var trig = [];
-    for (i = 0; i+3 <= tt.length; i++) {
-      trig.push(tt.substr(i, 3));
+    for (var i = 0; i + 3 <= tt.length; i++) {
+      trig.push(tt.substring(i, i + 3));
     }
-    clean(trig, false);
+    trig = clean(trig, false);
     //println(tt, "trig", strings.Join(trig, ","))
     or = or.or(new RegexQuery("AND", trig));
   }
@@ -521,12 +529,12 @@ function RegexInfo(opts) {
   this.canEmpty = opts.canEmpty ? opts.canEmpty : false;
 
   // exact is the exact set of strings matching the regexp.
-  this.exact = opts.exact ? opts.exact : null;
+  this.exact = opts.exact ? opts.exact : [];
 
   // if exact is nil, prefix is the set of possible match prefixes,
   // and suffix is the set of possible match suffixes.
-  this.prefix = opts.prefix ? opts.prefix : null; // otherwise: the exact set of matching prefixes ...
-  this.suffix = opts.suffix ? opts.suffix : null; // ... and suffixes
+  this.prefix = opts.prefix ? opts.prefix : []; // otherwise: the exact set of matching prefixes ...
+  this.suffix = opts.suffix ? opts.suffix : []; // ... and suffixes
 
   // match records a query that must be satisfied by any
   // match for the regexp, in addition to the information
@@ -596,7 +604,7 @@ RegexInfo.emptyString = function() {
  * Adds to the match query the trigrams for matching exact
  */
 RegexInfo.prototype.addExact = function() {
-   if (this.exact) {
+   if (this.exact.length) {
      this.match = this.match.andTrigrams(this.exact);
    }
 };
@@ -618,14 +626,14 @@ RegexInfo.prototype.simplify = function(force) {
         this.prefix.push(s);
         this.suffix.push(s);
       } else {
-        this.prefix.push(s.substr(0, 2));
-        this.suffix.push(s.substr(n - 2));
+        this.prefix.push(s.substring(0, 2));
+        this.suffix.push(s.substring(n - 2));
       }
     }
-    this.exact = null;
+    this.exact = [];
   }
 
-  if (this.exact === null) {
+  if (!this.exact.length) {
     this.prefix = this.simplifySet(this.prefix);
     this.suffix = this.simplifySet(this.suffix);
   }
@@ -636,8 +644,8 @@ RegexInfo.prototype.simplifyExact = function(force) {
   if (this.exact.length > maxExact) {
     doSimplify = true;
   } else {
-    var minLen = minLen(this.exact);
-    if (minLen >= 4 || minLen >= 3 && force) {
+    var ml = minLen(this.exact);
+    if (ml >= 4 || ml >= 3 && force) {
       doSimplify = true;
     }
   }
@@ -663,9 +671,9 @@ RegexInfo.prototype.simplifySet = function(s) {
       str = t[i];
       if (str.length >= n) {
         if (s == this.prefix) {
-          str = str.substr(0, n - 1);
+          str = str.substring(0, n - 1);
         } else {
-          str = str.substr(str.length - n + 1);
+          str = str.substring(str.length - n + 1);
         }
       }
       if (w === 0 || t[w - 1] != str) {
@@ -673,7 +681,7 @@ RegexInfo.prototype.simplifySet = function(s) {
         w++;
       }
     }
-    t = t.substr(0, w);
+    t = t.slice(0, w);
     t = clean(t, s == this.suffix);
   }
 
@@ -690,7 +698,7 @@ RegexInfo.prototype.simplifySet = function(s) {
       w++;
     }
   }
-  t = t.substr(0, w);
+  t = t.slice(0, w);
   return t;
 };
 
@@ -717,6 +725,9 @@ var suffixComparator = function(a, b) {
 
 // clean removes duplicates from the stringSet.
 var clean = function(s, isSuffix) {
+  if (s.length === 0) {
+    return s;
+  }
   s = s.sort(isSuffix ? suffixComparator : null);
   var sPrime = [s[0]];
   for (var i = 1; i < s.length; i++) {
@@ -748,10 +759,11 @@ var cross = function(s, t, isSuffix) {
   for (var i = 0; i < s.length; i++) {
     var ss = s[i];
     for (var j = 0; j < t.length; j++) {
-      p.push(ss + t[i]);
+      p.push(ss + t[j]);
     }
   }
-  return clean(p, isSuffix);
+  var ret = clean(p, isSuffix);
+  return ret;
 };
 
 // isSubsetOf returns true if all strings in s are also in t.

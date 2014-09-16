@@ -29,7 +29,7 @@ module.exports = {
    * @throws {SyntaxError} when the RegExp source isn't supported
    */
   parse: function(regexp) {
-    return peg.parse(regexp.source);
+    return peg.parse(regexp);
   },
 
   /**
