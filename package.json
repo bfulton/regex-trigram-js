@@ -16,6 +16,9 @@
     "regexp",
     "trigram"
   ],
+  "scripts": {
+    "test": "grunt test --verbose"
+  },
   "dependencies": {
     "stringset": "~0.2.1"
   },
