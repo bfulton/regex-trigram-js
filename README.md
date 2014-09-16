@@ -10,8 +10,9 @@ particular the [`RegexpQuery` and related functions](https://code.google.com/p/c
 from Go to JavaScript. Since JavaScript doesn't have an equivalent to Go's [`regexp/syntax`](http://golang.org/pkg/regexp/syntax/),
 we also use [PEG.js](http://pegjs.majda.cz/) to introduce a simplified regular
 expression grammar to obtain parse trees for a subset of valid [`RegExp`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp)
-patterns. The goal of this work is to enable JS clients an effective way to
-query Trigram indexes for candidate documents.
+patterns.
+
+The goal is to query trigram indexes from JS clients.
 
 Usage
 -----
