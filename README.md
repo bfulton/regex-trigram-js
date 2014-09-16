@@ -11,3 +11,66 @@ we also use [PEG.js](http://pegjs.majda.cz/) to introduce a simplified regular
 expression grammar to obtain parse trees for a subset of valid [`RegExp`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp)
 patterns. The goal of this work is to enable JS clients an effective way to
 query Trigram indexes for candidate documents.
+
+Usage
+-----
+
+Include the library.
+
+```javascript
+var regex = require('regex-trigram');
+```
+
+Parse a regular expression.
+
+```javascript
+var re = regex.parse("a[bc]d");
+console.log(JSON.stringify(re, null, 2));
+```
+
+Which should look like:
+
+```json
+{
+  "type": "concat",
+  "value": [
+    {
+      "type": "literal",
+      "value": "a"
+    },
+    {
+      "type": "concat",
+      "value": [
+        {
+          "type": "char_class",
+          "value": "bc"
+        },
+        {
+          "type": "literal",
+          "value": "d"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Convert the parsed regular expression into a trigram query.
+
+```javascript
+var q = regex.query(re);
+console.log(JSON.stringify(q, null, 2));
+```
+
+Which should look like:
+
+```json
+{
+  "op": "OR",
+  "trigram": [
+    "abd",
+    "acd"
+  ],
+  "sub": []
+}
+```

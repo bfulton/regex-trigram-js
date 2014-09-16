@@ -105,6 +105,6 @@ module.exports = {
         sub: []
       });
       test.done();
-    },
+    }
   }
 };
