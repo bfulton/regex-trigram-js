@@ -135,6 +135,37 @@ module.exports = {
           ]
       });
       test.done();
+    },
+
+    "/([0-9]+) ?sec/": function(test) {
+      var re = regex.parse("([0-9]+) ?sec");
+      var q = regex.query(re);
+      test.deepEqual(q, {
+        op: 'AND',
+        trigram: [ 'sec' ],
+        sub:
+          [
+            { op: 'OR',
+              trigram: [ '1se', '2se', '3se', '4se', '5se', '6se', '7se', '8se', '9se' ],
+              sub: [
+                { op: 'AND',
+                  trigram: [ ' se' ],
+                  sub: [
+                    { op: 'OR',
+                      trigram: [ '0 s', '1 s', '2 s', '3 s', '4 s', '5 s', '6 s', '7 s', '8 s', '9 s' ],
+                      sub: []
+                    }
+                  ]
+                },
+                { op: 'AND',
+                  trigram: [ '0se' ],
+                  sub: []
+                }
+              ]
+            }
+          ]
+      });
+      test.done();
     }
   }
 };

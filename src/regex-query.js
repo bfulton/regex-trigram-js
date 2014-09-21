@@ -22,7 +22,6 @@ var analyze = function(re) {
   //println("analyze", re.String())
   //defer func() { println("->", ret.String()) }()
   var info = new RegexInfo({});
-  var i;
   switch (re.type) {
     case "NO_MATCH":
       return RegexInfo.noMatch();
@@ -690,7 +689,7 @@ RegexInfo.prototype.simplifySet = function(s) {
   // doesn't help at all to know that  "abc" is also a possible
   // prefix, so delete "abc".
   w = 0;
-  var f = s == this.suffix ? hasSuffix : hasPrefix;
+  var f = isEqualTo(s, this.suffix) ? hasSuffix : hasPrefix;
   for (i = 0; i < t.length; i++) {
     str = t[i];
     if (w === 0 || !f(str, t[w - 1])) {
@@ -703,11 +702,11 @@ RegexInfo.prototype.simplifySet = function(s) {
 };
 
 var hasPrefix = function(str, prefix) {
-  return str.slice(0, prefix.length) == str;
+  return str.slice(0, prefix.length) == prefix;
 };
 
 var hasSuffix = function(str, suffix) {
-  return str.slice(-suffix.length) == str;
+  return str.slice(-suffix.length) == suffix;
 };
 
 var suffixComparator = function(a, b) {
@@ -762,8 +761,7 @@ var cross = function(s, t, isSuffix) {
       p.push(ss + t[j]);
     }
   }
-  var ret = clean(p, isSuffix);
-  return ret;
+  return clean(p, isSuffix);
 };
 
 // isSubsetOf returns true if all strings in s are also in t.
@@ -776,6 +774,21 @@ var isSubsetOf = function(s, t) {
       j++;
     }
     if (j >= t.length || t[j] != ss) {
+      return false;
+    }
+  }
+  return true;
+};
+
+var isEqualTo = function(s, t) {
+  if (s.length != t.length) {
+    return false;
+  }
+  if (s == t) {
+    return true;
+  }
+  for (var i = 0; i < s.length; i++) {
+    if (s[i] != t[i]) {
       return false;
     }
   }

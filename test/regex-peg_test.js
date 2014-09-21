@@ -155,6 +155,42 @@ module.exports = {
         ]
       });
       test.done();
+    },
+
+    "/([0-9]+) ?sec/": function(test) {
+      var tree = peg.parse("([0-9]+) ?sec");
+      test.deepEqual(tree, {
+        type: 'concat',
+        value: [
+          { type: 'repetition',
+            quantifier: '+',
+            value: {
+              type: 'char_class',
+              value: '0-9'
+            }
+          },
+          { type: 'concat',
+            value: [
+              { type: 'repetition',
+                quantifier: '?',
+                value: { type: 'literal', value: ' ' }
+              },
+              { type: 'concat',
+                value: [
+                  { type: 'literal', value: 's' },
+                  { type: 'concat',
+                    value: [
+                      { type: 'literal', value: 'e' },
+                      { type: 'literal', value: 'c' }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+      test.done();
     }
   }
 };
