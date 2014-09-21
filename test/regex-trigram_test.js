@@ -105,6 +105,36 @@ module.exports = {
         sub: []
       });
       test.done();
+    },
+
+    "/[aA]bc[dD]/": function(test) {
+      var re = regex.parse("[aA]bc[dD]");
+      var q = regex.query(re);
+      test.deepEqual(q, {
+        op: 'OR',
+        trigram: [],
+        sub:
+          [
+            { op: 'AND',
+              trigram: [ 'Abc' ],
+              sub: [
+                { op: 'OR',
+                  trigram: [ 'bcD', 'bcd' ],
+                  sub: []
+                }
+              ]
+            },
+            { op: 'AND',
+              trigram: [ 'abc', 'bcD' ],
+              sub: []
+            },
+            { op: 'AND',
+              trigram: [ 'abc', 'bcd' ],
+              sub: []
+            }
+          ]
+      });
+      test.done();
     }
   }
 };

@@ -136,6 +136,25 @@ module.exports = {
         ]
       });
       test.done();
+    },
+
+    "/[aA]bc[dD]/": function(test) {
+      var tree = peg.parse("[aA]bc[dD]");
+      test.deepEqual(tree, {
+        type: "concat",
+        value: [
+          { type: "char_class", value: "aA" },
+          { type: "concat", value: [
+            { type: "literal", value: "b" },
+            { type: "concat",
+              value: [
+                { type: "literal", value: "c" },
+                { type: "char_class", value: "dD" }
+            ] }
+          ] }
+        ]
+      });
+      test.done();
     }
   }
 };

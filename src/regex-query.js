@@ -118,34 +118,19 @@ var analyze = function(re) {
     case "char_class":
       info.match = RegexQuery.ALL;
 
+      var classExpansion = expandCharClass(re.value);
+
       // Special case.
-      if (re.value.length === 0) {
+      if (classExpansion.length === 0) {
         return RegexInfo.noMatch();
       }
 
-      // Special case.
-      if (re.value.length == 1) {
-        info.exact = [ re.value ];
-        break;
-      }
-
-      var n = 0;
-      for (i = 0; i < re.value.length; i += 2) {
-        n += re.value.charCodeAt(i + 1) - re.value.charCodeAt(i);
-      }
       // If the class is too large, it's okay to overestimate.
-      if (n > 100) {
+      if (classExpansion.length > 100) {
         return RegexInfo.anyChar();
       }
 
-      info.exact = [];
-      for (i = 0; i < re.value.length; i += 2) {
-        var lo = re.value.charCodeAt(i);
-        var hi = re.value.charCodeAt(i + 1);
-        for (var rr = lo; rr <= hi; rr++) {
-          info.exact.push(String.fromCharCode(rr));
-        }
-      }
+      info.exact = classExpansion;
       break;
 
     default:
@@ -153,6 +138,21 @@ var analyze = function(re) {
   }
   info.simplify(false);
   return info;
+};
+
+var expandCharClass = function(charClass) {
+  var pattern = new RegExp("[" + charClass + "]");
+  var expansion = [];
+  for (var code = 0; code < 0xFFFF; code++) {
+    var char = String.fromCharCode(code);
+    if (expansion.indexOf(char) != -1) {
+      continue;
+    }
+    if (pattern.test(char)) {
+      expansion.push(char);
+    }
+  }
+  return expansion;
 };
 
 // fold is the usual higher-order function.
@@ -387,7 +387,7 @@ RegexQuery.prototype.andOr = function(other, op) {
     // Add in factored trigrams.
     var otherOp = op == "AND" ? "OR" : "AND";
     var t = new RegexQuery(otherOp, common);
-    return t.andOr(s, t.Op);
+    return t.andOr(s, t.op);
   }
 
   // Otherwise just create the op.
