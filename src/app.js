@@ -1,0 +1,1 @@
+Regex = require('./regex-trigram');

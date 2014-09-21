@@ -3,14 +3,14 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     browserify: {
       dist: {
-        src: [ 'src/<%= pkg.name %>.js' ],
+        src: [ 'src/app.js' ],
         dest: 'dist/<%= pkg.name %>.js',
         options: {
           standalone: '<%= pkg.name %>'
         }
       },
       dist_min: {
-        src: [ 'src/<%= pkg.name %>.js' ],
+        src: [ 'src/app.js' ],
         dest: 'dist/<%= pkg.name %>.min.js',
         options: {
           standalone: '<%= pkg.name %>',

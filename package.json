@@ -1,6 +1,6 @@
 {
   "name": "regex-trigram",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "JavaScript port of portions of Google Code Search",
   "author": "Bright Fulton",
   "main": "lib/regex.js",
