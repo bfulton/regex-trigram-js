@@ -231,7 +231,7 @@ var alternate = function(x, y) {
     y.addExact();
   } else {
     xy.prefix = union(x.prefix, y.prefix, false);
-    xy.suffix = x.suffix.union(y.suffix, true);
+    xy.suffix = union(x.suffix, y.suffix, true);
   }
   xy.canEmpty = x.canEmpty || y.canEmpty;
   xy.match = x.match.or(y.match);

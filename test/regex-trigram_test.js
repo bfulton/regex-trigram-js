@@ -166,6 +166,33 @@ module.exports = {
           ]
       });
       test.done();
+    },
+
+    "/Mon|Tue|Wed|Thu|Fri|Sat|Sun|Oct|event|2014| 14/": function(test) {
+      var re = regex.parse("Mon|Tue|Wed|Thu|Fri|Sat|Sun|Oct|event|2014| 14");
+      var q = regex.query(re);
+      test.deepEqual(q, {
+        op: 'AND',
+        trigram: [],
+        sub:
+          [
+            { op: 'OR',
+              trigram: [ 'Fri', 'Mon', 'Oct', 'Sat', 'Sun', 'Thu', 'Tue', 'Wed' ],
+              sub: [
+                { op: 'AND',
+                  trigram: [ '014', '201' ],
+                  sub: []
+                },
+                { op: 'AND', trigram: [ ' 14' ], sub: [] },
+                { op: 'AND',
+                  trigram: [ 'ent', 'eve', 'ven' ],
+                  sub: []
+                }
+              ]
+            }
+          ]
+      });
+      test.done();
     }
   }
 };
