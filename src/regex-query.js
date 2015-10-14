@@ -727,7 +727,11 @@ var clean = function(s, isSuffix) {
   if (s.length === 0) {
     return s;
   }
-  s = s.sort(isSuffix ? suffixComparator : null);
+  if (isSuffix) {
+    s = s.sort(suffixComparator);
+  } else {
+    s = s.sort();
+  }
   var sPrime = [s[0]];
   for (var i = 1; i < s.length; i++) {
     var val = s[i];
