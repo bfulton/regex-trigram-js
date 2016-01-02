@@ -1,4 +1,4 @@
-var peg = require('../build/regex-peg');
+var peg = require('../regex-peg');
 
 module.exports = {
   "exports": {

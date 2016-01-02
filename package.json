@@ -3,7 +3,7 @@
   "version": "0.0.8",
   "description": "JavaScript port of portions of Google Code Search",
   "author": "Bright Fulton",
-  "main": "lib/regex.js",
+  "main": "src/regex-trigram.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/bfulton/regex-trigram-js"
