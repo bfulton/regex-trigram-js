@@ -16,7 +16,7 @@
  *    cosonle.log(q);
  */
 
-var peg = require('../build/regex-peg');
+var peg = require('../regex-peg');
 var query = require('./regex-query');
 
 module.exports = {

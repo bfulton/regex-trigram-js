@@ -29,7 +29,7 @@ module.exports = function(grunt) {
       options: { trackLineAndColumn: true },
       regex : {
         src: "src/regex.peg",
-        dest: "build/regex-peg.js"
+        dest: "regex-peg.js"
       }
     }
   });
