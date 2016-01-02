@@ -1,6 +1,6 @@
 {
   "name": "regex-trigram",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "JavaScript port of portions of Google Code Search",
   "author": "Bright Fulton",
   "main": "src/regex-trigram.js",
@@ -19,8 +19,7 @@
   "scripts": {
     "test": "grunt test --verbose"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "grunt": "~0.4.5",
     "grunt-browserify": "~3.0.1",
